@@ -10,11 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
-import { signupAdmin, type ApiResponse } from "@/lib/api/auth";
 
 export default function RegisterForm() {
   const router = useRouter();
-
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,7 +21,6 @@ export default function RegisterForm() {
     password: "",
     confirmPassword: "",
   });
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,25 +58,64 @@ export default function RegisterForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
+
     setIsLoading(true);
-
     try {
-      const response: ApiResponse<null> = await signupAdmin({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        contact: formData.phone,
+      const res = await fetch("/api/auth/signup/admin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+          contact: formData.phone,
+        }),
       });
 
-      toast.success("Registration Successful", {
-        description:
-          response.message ||
-          "Please check your email for verification instructions.",
-      });
+      const payload = (await res.json()) as {
+        success: boolean;
+        message?: string;
+        errors?: { message: string }[];
+      };
 
-      router.push("/auth/verify-otp");
+      // 1) Success → go to OTP
+      if (res.ok && payload.success) {
+        toast.success("Registration Successful", {
+          description: payload.message || "Check your email for verification.",
+        });
+        localStorage.setItem("email", formData.email);
+        setTimeout(() => router.push("/auth/verify-otp"), 100);
+        return;
+      }
+
+      // Helper to detect "already exists"
+      const isAlreadyExists = (msg: string) =>
+        msg.toLowerCase().includes("already exist");
+
+      // 2) Errors array
+      if (Array.isArray(payload.errors) && payload.errors.length > 0) {
+        payload.errors.forEach((err) => toast.error(err.message));
+
+        // if one of them is "User already exists", redirect after toast
+        if (payload.errors.some((err) => isAlreadyExists(err.message))) {
+          setTimeout(() => router.push("/auth/login"), 1500);
+        }
+        return;
+      }
+
+      // 3) Single message
+      if (payload.message) {
+        toast.error(payload.message);
+        if (isAlreadyExists(payload.message)) {
+          setTimeout(() => router.push("/auth/login"), 1500);
+        }
+        return;
+      }
+
+      // 4) Fallback
+      toast.error("Registration failed");
     } catch (err) {
       toast.error("Registration Failed", {
         description: err instanceof Error ? err.message : "Please try again.",
@@ -98,6 +134,7 @@ export default function RegisterForm() {
             alt="Your Logo"
             width={64}
             height={64}
+            style={{ height: "auto" }}
           />
         </div>
         <h1 className="text-xl font-semibold text-gray-900">Admin Sign up</h1>
@@ -120,7 +157,6 @@ export default function RegisterForm() {
                 value={formData.firstName}
                 onChange={handleInputChange}
                 className="pl-10 h-10 bg-white"
-                required
                 disabled={isLoading}
               />
             </div>
@@ -138,7 +174,6 @@ export default function RegisterForm() {
                 value={formData.lastName}
                 onChange={handleInputChange}
                 className="pl-10 h-10 bg-white"
-                required
                 disabled={isLoading}
               />
             </div>
@@ -156,7 +191,6 @@ export default function RegisterForm() {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="pl-10 h-10 bg-white"
-                required
                 disabled={isLoading}
               />
             </div>
@@ -174,7 +208,6 @@ export default function RegisterForm() {
                 value={formData.phone}
                 onChange={handleInputChange}
                 className="pl-10 h-10 bg-white"
-                required
                 disabled={isLoading}
               />
             </div>
@@ -192,7 +225,6 @@ export default function RegisterForm() {
                 value={formData.password}
                 onChange={handleInputChange}
                 className="pl-10 pr-10 h-10 bg-white"
-                required
                 disabled={isLoading}
               />
               <Button
@@ -224,7 +256,6 @@ export default function RegisterForm() {
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 className="pl-10 pr-10 h-10 bg-white"
-                required
                 disabled={isLoading}
               />
               <Button
@@ -244,7 +275,6 @@ export default function RegisterForm() {
             </div>
           </div>
 
-          {/* Sign up button */}
           <Button
             type="submit"
             className="w-full h-10 bg-blue-600 hover:bg-blue-700"
@@ -253,7 +283,6 @@ export default function RegisterForm() {
             {isLoading ? "Signing up..." : "Sign up"}
           </Button>
 
-          {/* Login link */}
           <div className="text-center text-sm">
             <span className="text-gray-600">Already have an account? </span>
             <Link

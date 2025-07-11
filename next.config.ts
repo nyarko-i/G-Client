@@ -1,5 +1,6 @@
-import "dotenv/config";
+// next.config.ts
 import type { NextConfig } from "next";
+import "dotenv/config";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
