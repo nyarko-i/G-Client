@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { forgotPassword } from "@/lib/api/auth";
+import Image from "next/image";
 
 export default function ForgotPasswordForm() {
   const router = useRouter();
@@ -98,8 +99,15 @@ export default function ForgotPasswordForm() {
     <Card className="w-full max-w-sm mx-auto shadow-2xl bg-white/95 backdrop-blur-sm border-0">
       <CardHeader className="text-center pb-4">
         <div className="flex items-center justify-center mb-4">
-          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-            <span className="text-white font-bold text-sm">LMS</span>
+          <div className=" rounded flex items-center justify-center">
+            <Image
+              src="/images/register/logo.png"
+              alt="Your Logo"
+              width={70}
+              height={70}
+              style={{ height: "auto" }}
+              className="mx-auto mb-2"
+            />
           </div>
         </div>
         <h1 className="text-xl font-semibold text-gray-900">

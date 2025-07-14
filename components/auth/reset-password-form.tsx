@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import { resetPassword } from "@/lib/api/auth";
+import Image from "next/image";
 
 interface ResetPasswordFormProps {
   token: string;
@@ -109,9 +110,21 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-center">Set New Password</CardTitle>
+        <div className="flex items-center justify-center mb-4">
+          <div className=" rounded flex items-center justify-center">
+            <Image
+              src="/images/register/logo.png"
+              alt="Your Logo"
+              width={70}
+              height={70}
+              style={{ height: "auto" }}
+              className="mx-auto mb-2"
+            />
+          </div>
+        </div>
+        <CardTitle className="text-center">Admin Reset Password</CardTitle>
         <CardDescription className="text-center">
-          Enter and confirm your new password
+          Create new password
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -120,7 +133,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           <div>
             <Label htmlFor="password">New Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" />
+              <Lock className="absolute left-3 top-3 text-gray-400 h-4 w-4" />
               <Input
                 id="password"
                 name="password"
@@ -140,7 +153,11 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                 onClick={() => setShowPassword((s) => !s)}
                 disabled={isLoading}
               >
-                {showPassword ? <EyeOff /> : <Eye />}
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -149,7 +166,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           <div>
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 text-gray-400" />
+              <Lock className="absolute left-3 top-3 text-gray-400 h-4 w-4" />
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -174,13 +191,18 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             </div>
           </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="w-full  bg-blue-600 hover:bg-blue-700"
+          >
             {isLoading ? "Updating..." : "Update Password"}
           </Button>
 
           <p className="text-center text-sm">
             <Link href="/auth/login" className="text-blue-600 hover:underline">
-              Back to login
+              <span className="text-gray-800 ">Back to login page, </span>
+              login
             </Link>
           </p>
         </form>

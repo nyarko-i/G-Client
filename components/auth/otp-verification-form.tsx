@@ -91,10 +91,9 @@ export default function OTPVerificationForm() {
       const res = await fetch("/api/auth/resend-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // resend endpoint typically just needs email, but if it expects something else,
-        // mirror the same pattern: JSON.stringify({ /* required fields */ })
+        // resend endpoint typically just needs email
         body: JSON.stringify({
-          /* your resend payload here */
+          /*  resend payload  */
         }),
       });
 
