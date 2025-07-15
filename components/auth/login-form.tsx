@@ -10,6 +10,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
+import { User } from "@/lib/api/auth";
+
+//  what  API returns
+interface LoginSuccessPayload {
+  success: true;
+  token: string;
+  message?: string;
+  user?: User;
+}
+
+interface LoginErrorPayload {
+  success: false;
+  errors?: { message: string }[];
+  message?: string;
+}
+
+type LoginResponse = LoginSuccessPayload | LoginErrorPayload;
 
 export default function LoginForm() {
   const router = useRouter();
@@ -17,7 +34,7 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -28,38 +45,30 @@ export default function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const payload = (await res.json()) as {
-        success: boolean;
-        message?: string;
-        errors?: { message: string }[];
-        data?: { token: string };
-      };
+      // Tell TS exactly what shape to expect
+      const payload = (await res.json()) as LoginResponse;
 
-      // Success
-      if (res.ok && payload.success && payload.data?.token) {
+      // If it succeeded and we have a token:
+      if (res.ok && payload.success) {
         toast.success("Login successful", { description: payload.message });
-        localStorage.setItem("token", payload.data.token);
-        return router.push("/dashboard");
+        localStorage.setItem("token", payload.token);
+
+        await router.replace("/dashboard");
+        return;
       }
 
-      // Validation errors array
-      if (Array.isArray(payload.errors) && payload.errors.length > 0) {
+      // Otherwise, payload.success === false
+      if ("errors" in payload && payload.errors && payload.errors.length > 0) {
         payload.errors.forEach((err) => toast.error(err.message));
-        return;
-      }
-
-      // Single message
-      if (payload.message) {
+      } else if (payload.message) {
         toast.error(payload.message);
-        return;
+      } else {
+        toast.error("Login failed");
       }
-
-      // Fallback
-      toast.error("Login failed");
-    } catch (err) {
-      toast.error("Login error", {
-        description: err instanceof Error ? err.message : "Please try again.",
-      });
+    } catch (err: unknown) {
+      // Handle unknown errors safely
+      const message = err instanceof Error ? err.message : "Please try again.";
+      toast.error("Login error", { description: message });
     } finally {
       setIsLoading(false);
     }
@@ -73,7 +82,7 @@ export default function LoginForm() {
           alt="Your Logo"
           width={64}
           height={64}
-          style={{ height: "auto" }}
+          style={{ height: "auto", width: "auto" }}
           className="mx-auto mb-2"
         />
         <h1 className="text-xl font-semibold text-gray-900">Admin Login</h1>
@@ -84,7 +93,7 @@ export default function LoginForm() {
 
       <CardContent className="px-6 pb-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
+          {/* Email Field */}
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
@@ -102,7 +111,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-          {/* Password */}
+          {/* Password Field */}
           <div className="space-y-1">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
@@ -120,7 +129,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-          {/* Forgot password link */}
+          {/* Forgot Password Link */}
           <div className="text-left text-sm">
             <Link
               href="/auth/forgot-password"
@@ -130,7 +139,7 @@ export default function LoginForm() {
             </Link>
           </div>
 
-          {/* Sign in */}
+          {/* Submit Button */}
           <Button
             type="submit"
             className="w-full h-10 bg-blue-600 hover:bg-blue-700"
@@ -139,7 +148,7 @@ export default function LoginForm() {
             {isLoading ? "Logging in..." : "Sign in"}
           </Button>
 
-          {/* Sign up */}
+          {/* Signup Link */}
           <div className="text-center text-sm">
             <span className="text-gray-600">Don’t have an account? </span>
             <Link

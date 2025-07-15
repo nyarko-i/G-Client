@@ -80,7 +80,7 @@ export default function RegisterForm() {
         errors?: { message: string }[];
       };
 
-      // 1) Success → go to OTP
+      //  Success → go to OTP
       if (res.ok && payload.success) {
         toast.success("Registration Successful", {
           description: payload.message || "Check your email for verification.",
@@ -94,7 +94,7 @@ export default function RegisterForm() {
       const isAlreadyExists = (msg: string) =>
         msg.toLowerCase().includes("already exist");
 
-      // 2) Errors array
+      //  Errors array
       if (Array.isArray(payload.errors) && payload.errors.length > 0) {
         payload.errors.forEach((err) => toast.error(err.message));
 
@@ -105,7 +105,7 @@ export default function RegisterForm() {
         return;
       }
 
-      // 3) Single message
+      // Single message
       if (payload.message) {
         toast.error(payload.message);
         if (isAlreadyExists(payload.message)) {
