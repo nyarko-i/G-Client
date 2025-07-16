@@ -11,7 +11,7 @@ import type {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
-  AuthResponse,
+  //AuthResponse,
 } from "../api/auth"
 
 // User role enumeration
@@ -106,5 +106,5 @@ export type {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   ChangePasswordRequest,
-  AuthResponse,
+  //AuthResponse,
 }

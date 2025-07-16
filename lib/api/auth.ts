@@ -1,5 +1,3 @@
-// lib/api/auth.ts
-
 export interface ApiResponse<TData> {
   success: boolean;
   message: string;

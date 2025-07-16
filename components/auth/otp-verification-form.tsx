@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import Image from "next/image";
 import { toast } from "sonner";
 
 export default function OTPVerificationForm() {
@@ -127,9 +128,14 @@ export default function OTPVerificationForm() {
     <Card className="w-full max-w-sm mx-auto shadow-2xl bg-white/95 backdrop-blur-sm border-0">
       <CardHeader className="text-center pb-4">
         <div className="flex items-center justify-center mb-4">
-          <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
-            <span className="text-white font-bold text-sm">LMS</span>
-          </div>
+          <Image
+            src="/images/register/logo.png"
+            alt="Your Logo"
+            width={64}
+            height={64}
+            style={{ height: "auto", width: "auto" }}
+            className="mx-auto mb-2"
+          />
         </div>
         <h1 className="text-xl font-semibold text-gray-900">
           OTP Verification
