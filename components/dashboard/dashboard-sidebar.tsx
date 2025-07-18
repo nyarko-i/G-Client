@@ -74,16 +74,32 @@ export default function DashboardSidebar({
           }`}
         >
           {/* Logo */}
-          <div className="flex h-20 shrink-0 items-center px-4 animate-fade-in">
-            <div className="w-full bg-white rounded-lg p-4 shadow-md flex justify-center">
-              <Image
-                src="/images/register/logo.png"
-                alt="Your Logo"
-                width={64}
-                height={64}
-                style={{ height: "auto", width: "auto" }}
-              />
-            </div>
+          <div
+            className={`flex shrink-0 items-center animate-fade-in ${
+              isCollapsed ? "h-16 justify-center" : "h-20 px-4"
+            }`}
+          >
+            {isCollapsed ? (
+              <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-sm">
+                <Image
+                  src="/images/register/logo.png"
+                  alt="Logo"
+                  width={32}
+                  height={32}
+                  style={{ height: "auto", width: "auto" }}
+                />
+              </div>
+            ) : (
+              <div className="w-full bg-white rounded-lg p-4 shadow-md flex justify-center">
+                <Image
+                  src="/images/register/logo.png"
+                  alt="Your Logo"
+                  width={64}
+                  height={64}
+                  style={{ height: "auto", width: "auto" }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Navigation */}
