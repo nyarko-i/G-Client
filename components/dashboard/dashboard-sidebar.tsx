@@ -90,7 +90,7 @@ export default function DashboardSidebar({
                 />
               </div>
             ) : (
-              <div className="w-full bg-white rounded-sm p-4 shadow-md flex justify-center">
+              <div className="w-full bg-white rounded-sm p-4  shadow-md flex justify-center">
                 <Image
                   src="/images/register/logo.png"
                   alt="Your Logo"
