@@ -80,7 +80,7 @@ export default function DashboardSidebar({
             }`}
           >
             {isCollapsed ? (
-              <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 bg-white rounded-sm flex items-center justify-center shadow-sm">
                 <Image
                   src="/images/register/logo.png"
                   alt="Logo"
@@ -90,12 +90,12 @@ export default function DashboardSidebar({
                 />
               </div>
             ) : (
-              <div className="w-full bg-white rounded-lg p-4 shadow-md flex justify-center">
+              <div className="w-full bg-white rounded-sm p-4 shadow-md flex justify-center">
                 <Image
                   src="/images/register/logo.png"
                   alt="Your Logo"
-                  width={64}
-                  height={64}
+                  width={62}
+                  height={62}
                   style={{ height: "auto", width: "auto" }}
                 />
               </div>
@@ -168,7 +168,7 @@ export default function DashboardSidebar({
                 onClick={() => onToggle(false)}
                 className="text-white"
               >
-                Close
+                x
               </Button>
             </div>
             {/* Same nav items */}

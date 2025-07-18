@@ -3,6 +3,8 @@ import animatePlugin from "tailwindcss-animate";
 /** @type {import('tailwindcss').Config} */
 const config = {
   darkMode: "class",
+  prefix: "",
+
   content: [
     "./app/**/*.{ts,tsx}",
     "./pages/**/*.{ts,tsx}",
@@ -11,6 +13,7 @@ const config = {
     "./ui/**/*.{ts,tsx}",
     "./**/*.{js,ts,jsx,tsx,mdx}",
   ],
+
   theme: {
     container: {
       center: true,
@@ -26,6 +29,7 @@ const config = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -54,12 +58,23 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+
+        // ← added chart colors from second config
+        chart: {
+          1: "hsl(221.2 83.2% 53.3%)",
+          2: "hsl(212 95% 68%)",
+          3: "hsl(216 92% 60%)",
+          4: "hsl(210 98% 78%)",
+          5: "hsl(212 97% 87%)",
+        },
       },
+
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -84,6 +99,7 @@ const config = {
         "fade-in": "fade-in 0.3s ease-out",
         "slide-in": "slide-in 0.3s ease-out",
       },
+
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
