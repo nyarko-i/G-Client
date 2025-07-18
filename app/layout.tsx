@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-// 👇 Import Sonner's Toaster
+//Import Sonner's Toaster
 import { Toaster } from "sonner";
 
 // Load Inter font with Latin subset for optimal performance

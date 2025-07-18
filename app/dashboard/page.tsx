@@ -1,7 +1,5 @@
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
+
 export default function Dashboard() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-2xl font-bold">Welcome to the Dashboard Page</h1>
-    </div>
-  );
+  return <DashboardLayout />;
 }

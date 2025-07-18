@@ -52,7 +52,9 @@ export default function LoginForm() {
       if (res.ok && payload.success) {
         toast.success("Login successful", { description: payload.message });
         localStorage.setItem("token", payload.token);
-
+        if (payload.user) {
+          localStorage.setItem("user", JSON.stringify(payload.user));
+        }
         await router.replace("/dashboard");
         return;
       }
