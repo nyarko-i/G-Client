@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Calendar } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-// 1. Define the TrackData interface
+//  Define the TrackData interface
 interface TrackData {
   id: string;
   title: string;
@@ -16,7 +17,7 @@ interface TrackData {
   technologies: string[];
 }
 
-// 2. Provide your sample data array
+//  Provide your sample data array
 const tracksData: TrackData[] = [
   {
     id: "1",
@@ -52,7 +53,7 @@ const tracksData: TrackData[] = [
   },
 ];
 
-// 3. Helper to assign each tech badge its color classes
+//  Helper to assign each tech badge its color classes
 function getTechColorClass(tech: string): string {
   const map: Record<string, string> = {
     NodeJs: "bg-green-100 text-green-800 border-none",
@@ -67,7 +68,7 @@ function getTechColorClass(tech: string): string {
   return map[tech] || "bg-gray-100 text-gray-800 border-none";
 }
 
-// 4. Individual TrackCard component
+//  Individual TrackCard component
 function TrackCard({ track, index }: { track: TrackData; index: number }) {
   const [mounted, setMounted] = useState(false);
 
@@ -130,12 +131,16 @@ function TrackCard({ track, index }: { track: TrackData; index: number }) {
 
 // Main TracksSection export
 export default function TracksSection() {
+  const router = useRouter();
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">Tracks</h2>
-        <button className="text-blue-600 hover:underline text-sm font-medium cursor-pointer">
+        <button
+          onClick={() => router.push("/dashboard/tracks")}
+          className="text-blue-600 hover:underline text-sm font-medium cursor-pointer"
+        >
           View all
         </button>
       </div>
