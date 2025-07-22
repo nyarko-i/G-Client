@@ -50,6 +50,7 @@ export default function CoursesTable({
       .join("")
       .toUpperCase()
       .slice(0, 2);
+
   const color = (a: string) =>
     [
       "bg-blue-500",
@@ -65,9 +66,9 @@ export default function CoursesTable({
   return (
     <Card
       className={`
-      transition-all duration-700
-      ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
-    `}
+        transition-all duration-700
+        ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}
+      `}
     >
       <CardContent className="p-0">
         <div className="grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-sm font-medium">
@@ -158,16 +159,21 @@ export default function CoursesTable({
             </Button>
 
             <div className="flex space-x-1">
-              {Array.from({ length: totalPages }).map((_, idx) => (
-                <Button
-                  key={idx}
-                  variant={currentPage === idx + 1 ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setCurrentPage(idx + 1)}
-                >
-                  {idx + 1}
-                </Button>
-              ))}
+              {Array.from({ length: totalPages }).map((_, idx) => {
+                const page = idx + 1;
+                const isActive = currentPage === page;
+                return (
+                  <Button
+                    key={page}
+                    variant={isActive ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className={isActive ? "bg-blue-600 text-white" : ""}
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
             </div>
 
             <Button
