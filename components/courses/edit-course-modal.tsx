@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,19 +21,21 @@ import {
 } from "@/components/ui/dialog";
 import { Course } from "@/lib/types/course";
 
-export interface AddCourseModalProps {
+export interface EditCourseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (course: Course) => void;
+  course: Course;
   availableTracks: string[];
 }
 
-export default function AddCourseModal({
+export default function EditCourseModal({
   isOpen,
   onClose,
   onSubmit,
+  course,
   availableTracks,
-}: AddCourseModalProps) {
+}: EditCourseModalProps) {
   const [formData, setFormData] = useState<
     Omit<Course, "id" | "picture" | "dateCreated" | "status">
   >({
@@ -42,6 +44,17 @@ export default function AddCourseModal({
     track: "",
     description: "",
   });
+
+  useEffect(() => {
+    if (course) {
+      setFormData({
+        title: course.title,
+        author: course.author,
+        track: course.track,
+        description: course.description,
+      });
+    }
+  }, [course]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -55,23 +68,21 @@ export default function AddCourseModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newCourse: Course = {
+    const updated: Course = {
+      ...course,
       ...formData,
-      picture: `/placeholder.svg?height=100&width=100&text=${encodeURIComponent(
-        formData.title
-      )}`,
     };
-    onSubmit(newCourse);
-    setFormData({ title: "", author: "", track: "", description: "" });
+    onSubmit(updated);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Course</DialogTitle>
+          <DialogTitle>Update Course</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Same form fields as AddCourseModal */}
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
@@ -83,7 +94,6 @@ export default function AddCourseModal({
               required
             />
           </div>
-
           {/* Author */}
           <div className="space-y-2">
             <Label htmlFor="author">Author</Label>
@@ -95,7 +105,6 @@ export default function AddCourseModal({
               required
             />
           </div>
-
           {/* Track */}
           <div className="space-y-2">
             <Label htmlFor="track">Track</Label>
@@ -116,7 +125,6 @@ export default function AddCourseModal({
               </SelectContent>
             </Select>
           </div>
-
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
@@ -129,8 +137,7 @@ export default function AddCourseModal({
               required
             />
           </div>
-
-          {/* Picture Upload (static) */}
+          {/* Picture (static) */}
           <div className="space-y-2">
             <Label>Picture</Label>
             <div className="border-2 border-dashed rounded-lg p-6 text-center">
@@ -140,12 +147,11 @@ export default function AddCourseModal({
               </p>
             </div>
           </div>
-
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Create Course</Button>
+            <Button type="submit">Update Course</Button>
           </div>
         </form>
       </DialogContent>
