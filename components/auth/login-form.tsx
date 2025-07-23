@@ -147,7 +147,7 @@ export default function LoginForm() {
             className="w-full h-10 bg-blue-600 hover:bg-blue-700"
             disabled={isLoading}
           >
-            {isLoading ? "Logging in..." : "Sign in"}
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
 
           {/* Signup Link */}

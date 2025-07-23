@@ -31,7 +31,7 @@ export default function RootLayout({
         {children}
 
         {/* Sonner's Toaster: will render toast notifications */}
-        <Toaster position="bottom-right" />
+        <Toaster position="top-right" />
       </body>
     </html>
   );

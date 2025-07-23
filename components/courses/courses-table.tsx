@@ -168,7 +168,9 @@ export default function CoursesTable({
                     variant={isActive ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setCurrentPage(page)}
-                    className={isActive ? "bg-blue-600 text-white" : ""}
+                    className={
+                      isActive ? "bg-blue-600 hover:bg-blue-700 text-white" : ""
+                    }
                   >
                     {page}
                   </Button>

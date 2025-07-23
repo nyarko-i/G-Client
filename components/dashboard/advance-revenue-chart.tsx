@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import {
   Bar,
-  Line,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -11,6 +10,7 @@ import {
   Tooltip,
   TooltipProps,
 } from "recharts";
+
 import {
   Card,
   CardContent,
@@ -18,9 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { TrendingUp, TrendingDown } from "lucide-react";
 
-/** Extended data */
+// Sample revenue data
 const data = [
   { month: "Jan", revenue: 4000, growth: 12 },
   { month: "Feb", revenue: 3000, growth: -25 },
@@ -30,11 +31,11 @@ const data = [
   { month: "Jun", revenue: 4200, growth: 8 },
 ];
 
-/** Calculate totals */
+// Totals and averages
 const totalRevenue = data.reduce((sum, d) => sum + d.revenue, 0);
 const avgGrowth = data.reduce((sum, d) => sum + d.growth, 0) / data.length;
 
-/** Custom tooltip renderer */
+// Tooltip content
 function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   if (active && payload && payload.length) {
     return (
@@ -51,6 +52,7 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   return null;
 }
 
+// Main chart component
 export default function AdvancedRevenueChart() {
   const [visible, setVisible] = useState(false);
 
@@ -67,15 +69,17 @@ export default function AdvancedRevenueChart() {
     >
       <CardHeader className="transition-colors duration-300 hover:bg-gray-50">
         <div className="flex items-center justify-between">
+          {/* Left: Title */}
           <div>
             <CardTitle className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors">
               Revenue Analytics
             </CardTitle>
             <CardDescription>
-              Revenue and growth trends over 6 months
+              Revenue performance over the last 6 months
             </CardDescription>
           </div>
 
+          {/* Right: Totals */}
           <div className="text-right">
             <div className="text-2xl font-bold text-gray-900">
               ${totalRevenue.toLocaleString()}
@@ -96,6 +100,7 @@ export default function AdvancedRevenueChart() {
         </div>
       </CardHeader>
 
+      {/* Chart Section */}
       <CardContent className="h-[350px]">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
@@ -120,37 +125,15 @@ export default function AdvancedRevenueChart() {
               }
             />
 
-            <YAxis
-              yAxisId="growth"
-              orientation="right"
-              tickLine={false}
-              axisLine={false}
-              className="text-xs"
-              tickFormatter={(value: number) => `${value}%`}
-            />
-
             <Tooltip content={<CustomTooltip />} />
 
+            {/* Deep Blue Revenue Bar */}
             <Bar
               yAxisId="revenue"
               dataKey="revenue"
-              fill="hsl(var(--chart-1))"
+              fill="#1e3a8a" // Deep blue
               radius={[4, 4, 0, 0]}
               className="transition-all duration-300 hover:opacity-80"
-            />
-
-            <Line
-              yAxisId="growth"
-              type="monotone"
-              dataKey="growth"
-              stroke="hsl(var(--chart-2))"
-              strokeWidth={3}
-              dot={{ fill: "hsl(var(--chart-2))", r: 4, strokeWidth: 2 }}
-              activeDot={{
-                r: 6,
-                stroke: "hsl(var(--chart-2))",
-                strokeWidth: 2,
-              }}
             />
           </ComposedChart>
         </ResponsiveContainer>
