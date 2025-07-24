@@ -95,12 +95,12 @@ function StatCard({ stat, index }: { stat: StatCardData; index: number }) {
 
   return (
     <Card
-      className={`overflow-hidden transition-all duration-500 hover:shadow-xl hover:scale-105 hover:-translate-y-1 cursor-pointer group ${
+      className={`overflow-hidden transition-all duration-500 hover:shadow-xl hover:scale-105 cursor-pointer group ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
-      <CardContent className="p-6">
+      <CardContent>
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-600 transition-colors duration-300 group-hover:text-gray-700">
