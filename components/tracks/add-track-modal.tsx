@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
 
+// Props expected from parent component
 interface AddTrackModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -25,6 +26,7 @@ export default function AddTrackModal({
   onClose,
   onSubmit,
 }: AddTrackModalProps) {
+  // Form state variables
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -35,6 +37,7 @@ export default function AddTrackModal({
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
+  // Handles image selection and preview display
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
@@ -47,26 +50,20 @@ export default function AddTrackModal({
     }
   };
 
+  // Handles form submission logic
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!file) {
-      toast.error("Please select an image file");
-      return;
-    }
-
-    if (title.trim().length === 0) {
-      toast.error("Track title is required");
-      return;
-    }
-
-    if (description.trim().length < 10) {
-      toast.error("Description must be at least 10 characters");
-      return;
-    }
+    // Basic validation
+    if (!file) return toast.error("Please select an image file");
+    if (title.trim().length === 0)
+      return toast.error("Track title is required");
+    if (description.trim().length < 10)
+      return toast.error("Description must be at least 10 characters");
 
     setIsLoading(true);
 
+    // Prepare form data for API
     const form = new FormData();
     form.append("name", title);
     form.append("description", description);
@@ -90,6 +87,7 @@ export default function AddTrackModal({
         return;
       }
 
+      // Reset form and refresh parent data
       toast.success("Track added!");
       setTitle("");
       setDescription("");
@@ -115,6 +113,7 @@ export default function AddTrackModal({
           <DialogTitle>Add New Track</DialogTitle>
         </DialogHeader>
 
+        {/* Track submission form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="title">Title</Label>
@@ -145,6 +144,7 @@ export default function AddTrackModal({
               onChange={handleFileChange}
               required
             />
+            {/* Display image preview if available */}
             {preview && (
               <div className="mt-2 w-full h-32 relative">
                 <Image
@@ -201,6 +201,7 @@ export default function AddTrackModal({
             />
           </div>
 
+          {/* Submit button */}
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? "Submitting..." : "Add Track"}
           </Button>

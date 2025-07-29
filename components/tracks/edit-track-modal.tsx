@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { TrackData } from "@/lib/types/track";
 
+// Props received from parent
 interface EditTrackModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,6 +28,7 @@ export default function EditTrackModal({
   onUpdate,
   track,
 }: EditTrackModalProps) {
+  // Form field state
   const [formData, setFormData] = useState({
     title: "",
     price: "",
@@ -35,8 +37,11 @@ export default function EditTrackModal({
     description: "",
     technologies: "",
   });
+
+  // Stores new selected image (optional)
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
+  // Populate form when track data changes
   useEffect(() => {
     if (track) {
       setFormData({
@@ -50,6 +55,7 @@ export default function EditTrackModal({
     }
   }, [track]);
 
+  // Updates form fields on change
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -57,18 +63,21 @@ export default function EditTrackModal({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handles new image selection
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedImage(e.target.files[0]);
     }
   };
 
+  // Handles form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!track?.id) return toast.error("Missing track ID.");
 
+    // Build form data for PUT request
     const form = new FormData();
-    form.append("name", formData.title); // API expects 'name'
+    form.append("name", formData.title); // Backend expects 'name'
     form.append("price", formData.price);
     form.append("duration", formData.duration);
     form.append("instructor", formData.instructor);
@@ -89,8 +98,8 @@ export default function EditTrackModal({
 
       if (json.success && json.data) {
         toast.success("Track updated successfully");
-        onUpdate(json.data); // Send updated data back to parent
-        onClose(); // Close modal
+        onUpdate(json.data); // Notify parent of new data
+        onClose(); // Close the modal
       } else {
         toast.error(json.message || "Update failed");
       }
@@ -107,6 +116,7 @@ export default function EditTrackModal({
           <DialogTitle>Update Track</DialogTitle>
         </DialogHeader>
 
+        {/* Update Track Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Track Name</Label>
@@ -152,6 +162,7 @@ export default function EditTrackModal({
           <div className="space-y-2">
             <Label>Image (upload new to replace)</Label>
             <Input type="file" accept="image/*" onChange={handleImageChange} />
+            {/* Show selected file name if any */}
             {selectedImage && (
               <p className="text-xs text-gray-500">
                 Selected: {selectedImage.name}
@@ -178,6 +189,7 @@ export default function EditTrackModal({
             />
           </div>
 
+          {/* Action Buttons */}
           <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

@@ -6,6 +6,7 @@ import { CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User } from "lucide-react";
 
+// Interface for each track item
 interface Track {
   id: string;
   title: string;
@@ -17,10 +18,12 @@ interface Track {
   instructor: string;
 }
 
+// Props for the full list of tracks
 interface TracksGridProps {
   tracks: Track[];
 }
 
+// Grid component to display tracks
 export default function TracksGrid({ tracks }: TracksGridProps) {
   const router = useRouter();
 
@@ -32,7 +35,7 @@ export default function TracksGrid({ tracks }: TracksGridProps) {
           onClick={() => router.push(`/dashboard/tracks/${track.id}`)}
           className="rounded-2xl shadow hover:shadow-md cursor-pointer transition border overflow-hidden bg-white"
         >
-          {/* Image starts flush at the top */}
+          {/* Track image header */}
           <div className="relative w-full h-44">
             <Image
               src={track.image}
@@ -43,14 +46,17 @@ export default function TracksGrid({ tracks }: TracksGridProps) {
             />
           </div>
 
-          {/* Card content */}
+          {/* Track info */}
           <div className="p-4 space-y-2">
+            {/* Title */}
             <CardTitle className="text-lg font-bold">{track.title}</CardTitle>
 
+            {/* Short description */}
             <p className="text-sm text-gray-700 line-clamp-3">
               {track.description}
             </p>
 
+            {/* Duration and Instructor */}
             <div className="gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-1 pb-2">
                 <Calendar className="w-4 h-4" />
@@ -62,9 +68,10 @@ export default function TracksGrid({ tracks }: TracksGridProps) {
               </div>
             </div>
 
+            {/* Track status */}
             <Badge variant="outline">{track.status}</Badge>
 
-            {/* Technologies */}
+            {/* Technologies badges */}
             {track.technologies?.length ? (
               <div className="flex flex-wrap gap-2 mt-2">
                 {track.technologies.map((tech, i) => (

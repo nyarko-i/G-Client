@@ -8,7 +8,7 @@ import TracksGrid from "./tracks-grid";
 import AddTrackModal from "./add-track-modal";
 import { toast } from "sonner";
 
-// Final Track interface for internal use
+// Interface for cleaned/formatted track data used in the app
 interface Track {
   id: string;
   title: string;
@@ -23,7 +23,7 @@ interface Track {
   status: "active" | "inactive" | "draft";
 }
 
-// Raw track data from the API before transforming
+// Interface for raw track data as received from the API
 interface ApiTrack {
   _id?: string;
   id?: string;
@@ -41,11 +41,16 @@ interface ApiTrack {
 }
 
 export default function TracksPageContent() {
+  // State to store list of tracks
   const [tracks, setTracks] = useState<Track[]>([]);
+  // State to handle loading state while fetching data
   const [isLoading, setIsLoading] = useState(true);
+  // State to control visibility of AddTrack modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  // Used to control animation timing
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Fetch tracks from API and format the data
   const fetchTracks = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -54,6 +59,7 @@ export default function TracksPageContent() {
 
       let rawTracks: ApiTrack[] = [];
 
+      // Handle different possible response structures
       if (Array.isArray(result)) {
         rawTracks = result;
       } else if (result.success && Array.isArray(result.data)) {
@@ -66,6 +72,7 @@ export default function TracksPageContent() {
         return;
       }
 
+      // Clean and standardize the track data
       const cleanedTracks: Track[] = rawTracks.map((track: ApiTrack) => ({
         id: track.id || track._id || crypto.randomUUID(),
         title: track.name || track.title || "Untitled",
@@ -91,10 +98,12 @@ export default function TracksPageContent() {
     }
   }, []);
 
+  // Fetch tracks when component mounts
   useEffect(() => {
     fetchTracks();
   }, [fetchTracks]);
 
+  // Trigger animation after short delay
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
     return () => clearTimeout(timer);
@@ -124,7 +133,7 @@ export default function TracksPageContent() {
           </Button>
         </div>
 
-        {/* Track Grid */}
+        {/* Track Grid Section */}
         <div
           className={`transition-all duration-700 ease-out delay-200 ${
             isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -139,7 +148,7 @@ export default function TracksPageContent() {
           )}
         </div>
 
-        {/* Modal */}
+        {/* Add Track Modal */}
         <AddTrackModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
