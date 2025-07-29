@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Calendar, User } from "lucide-react"; // Import icons
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import EditTrackModal from "./edit-track-modal";
 
-// Defines the structure of a single track object
+// Type definition for a single track
 interface TrackData {
   id: string;
   title: string;
@@ -24,6 +24,7 @@ interface TrackData {
   status: "active" | "inactive" | "draft";
 }
 
+// Props for the track details component
 interface TrackDetailsContentProps {
   trackId: string;
 }
@@ -36,7 +37,7 @@ export default function TrackDetailsContent({
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch track details on mount or when trackId changes
+  // Fetch track details from API when component mounts or trackId changes
   useEffect(() => {
     if (!trackId) return;
 
@@ -48,7 +49,7 @@ export default function TrackDetailsContent({
         if (json.success && json.track) {
           const t = json.track;
 
-          // Normalize track data to match expected structure
+          // Normalize backend response to match our TrackData structure
           setTrack({
             id: t.id || t._id,
             title: t.name || t.title || "Untitled",
@@ -74,7 +75,7 @@ export default function TrackDetailsContent({
     })();
   }, [trackId]);
 
-  // Handles track deletion with confirmation
+  // Handle delete action
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this track?")) return;
 
@@ -86,7 +87,7 @@ export default function TrackDetailsContent({
 
       if (json.success) {
         toast.success("Track deleted");
-        router.push("/dashboard/tracks"); // Redirect after delete
+        router.push("/dashboard/tracks"); // Redirect to track list
       } else {
         toast.error("Failed to delete");
       }
@@ -96,13 +97,13 @@ export default function TrackDetailsContent({
     }
   };
 
-  // Updates local state when track is edited
+  // Update local track state after editing
   const handleUpdate = (updated: TrackData) => setTrack(updated);
 
-  // Show loading state
+  // Loading indicator
   if (isLoading) return <div className="p-4 text-gray-600">Loading…</div>;
 
-  // Show error if track not found
+  // Error message if track not found
   if (!track)
     return <div className="p-4 text-red-500 of-track">Track not found</div>;
 
@@ -116,7 +117,7 @@ export default function TrackDetailsContent({
         ←
       </button>
 
-      {/* Track image */}
+      {/* Track image section */}
       <Card className="p-0 overflow-hidden">
         <CardContent className="p-0">
           <div className="relative w-full h-64">
@@ -131,21 +132,33 @@ export default function TrackDetailsContent({
         </CardContent>
       </Card>
 
-      {/* Title, instructor, and price */}
+      {/* Title, instructor, duration, and price */}
       <div className="flex items-start justify-between">
         <div>
+          {/* Title */}
           <h2 className="text-3xl font-bold">{track.title}</h2>
-          <div className="text-sm text-gray-500 flex items-center gap-2 mt-1">
-            <span>{track.duration}</span>·<span>{track.instructor}</span>
+
+          {/* Duration and Instructor with Icons */}
+          <div className="text-sm text-gray-500 flex items-center gap-4 mt-1">
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              <span>{track.duration}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <User className="w-4 h-4" />
+              <span>{track.instructor}</span>
+            </div>
           </div>
         </div>
+
+        {/* Price */}
         <div className="text-xl font-semibold text-blue-600">
           ${track.price}
         </div>
       </div>
 
-      {/* Technologies used in the track */}
-      <div className="flex gap-2">
+      {/* Technologies badges */}
+      <div className="flex gap-2 flex-wrap">
         {track.technologies.map((tech, idx) => (
           <Badge key={idx} variant="secondary">
             {tech}
@@ -153,10 +166,10 @@ export default function TrackDetailsContent({
         ))}
       </div>
 
-      {/* Description */}
+      {/* Description section */}
       <p className="text-gray-700">{track.description}</p>
 
-      {/* Extra info: students, rating, status */}
+      {/* Extra stats: students, rating, status */}
       <div className="flex flex-wrap gap-3 text-sm text-gray-600 border-t pt-4">
         <span>Students: {track.students}</span>
         <span>Rating: ⭐ {track.rating} / 5</span>
@@ -165,7 +178,7 @@ export default function TrackDetailsContent({
         </span>
       </div>
 
-      {/* Edit and delete buttons */}
+      {/* Action buttons: Edit / Delete */}
       <div className="flex justify-end gap-4 pt-4">
         <button
           onClick={() => setIsEditing(true)}
@@ -181,7 +194,7 @@ export default function TrackDetailsContent({
         </button>
       </div>
 
-      {/* Edit modal */}
+      {/* Edit modal for updating track */}
       {track && (
         <EditTrackModal
           isOpen={isEditing}
