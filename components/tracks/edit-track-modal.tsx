@@ -1,8 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect } from "react";
-import { Upload } from "lucide-react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,45 +11,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-// Same types as AddTrackModal for consistency
-interface Track {
-  title: string;
-  price: number;
-  duration: string;
-  instructor: string;
-  description: string;
-  technologies: string[];
-  image: string;
-}
-
-interface TrackFormData {
-  title: string;
-  price: string;
-  duration: string;
-  instructor: string;
-  description: string;
-  technologies: string;
-}
+import { toast } from "sonner";
+import { TrackData } from "@/lib/types/track";
 
 interface EditTrackModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (track: Track) => void;
-  track: Track | null;
+  onUpdate: (updatedTrack: TrackData) => void;
+  track: TrackData | null;
 }
 
-/**
- * Edit track modal component
- * Form for updating existing tracks
- */
 export default function EditTrackModal({
   isOpen,
   onClose,
-  onSubmit,
+  onUpdate,
   track,
 }: EditTrackModalProps) {
-  const [formData, setFormData] = useState<TrackFormData>({
+  const [formData, setFormData] = useState({
     title: "",
     price: "",
     duration: "",
@@ -59,16 +35,17 @@ export default function EditTrackModal({
     description: "",
     technologies: "",
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   useEffect(() => {
     if (track) {
       setFormData({
-        title: track.title || "",
-        price: track.price?.toString() || "",
-        duration: track.duration || "",
-        instructor: track.instructor || "",
-        description: track.description || "",
-        technologies: track.technologies?.join(", ") || "",
+        title: track.title,
+        price: track.price.toString(),
+        duration: track.duration,
+        instructor: track.instructor,
+        description: track.description,
+        technologies: track.technologies.join(", "),
       });
     }
   }, [track]);
@@ -77,123 +54,131 @@ export default function EditTrackModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedImage(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!track?.id) return toast.error("Missing track ID.");
 
-    const updatedTrack: Track = {
-      title: formData.title,
-      price: Number(formData.price),
-      duration: formData.duration,
-      instructor: formData.instructor,
-      description: formData.description,
-      technologies: formData.technologies.split(",").map((tech) => tech.trim()),
-      image: track?.image ?? "/placeholder.svg", // fallback image
-    };
+    const form = new FormData();
+    form.append("name", formData.title); // API expects 'name'
+    form.append("price", formData.price);
+    form.append("duration", formData.duration);
+    form.append("instructor", formData.instructor);
+    form.append("description", formData.description);
+    form.append("technologies", formData.technologies);
 
-    onSubmit(updatedTrack);
+    if (selectedImage) {
+      form.append("image", selectedImage);
+    }
+
+    try {
+      const res = await fetch(`/api/tracks/${track.id}`, {
+        method: "PUT",
+        body: form,
+      });
+
+      const json = await res.json();
+
+      if (json.success && json.data) {
+        toast.success("Track updated successfully");
+        onUpdate(json.data); // Send updated data back to parent
+        onClose(); // Close modal
+      } else {
+        toast.error(json.message || "Update failed");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error");
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            Update Track
-          </DialogTitle>
+          <DialogTitle>Update Track</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Track name</Label>
+            <Label>Track Name</Label>
             <Input
-              id="title"
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              placeholder="Enter track name"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="price">Price</Label>
+            <Label>Price</Label>
             <Input
-              id="price"
               name="price"
               type="number"
               value={formData.price}
               onChange={handleInputChange}
-              placeholder="Enter price"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="duration">Duration</Label>
+            <Label>Duration</Label>
             <Input
-              id="duration"
               name="duration"
               value={formData.duration}
               onChange={handleInputChange}
-              placeholder="e.g., 12 weeks"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="instructor">Instructor</Label>
+            <Label>Instructor</Label>
             <Input
-              id="instructor"
               name="instructor"
               value={formData.instructor}
               onChange={handleInputChange}
-              placeholder="Enter instructor name"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Picture</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">
-                Choose file or file chosen
+            <Label>Image (upload new to replace)</Label>
+            <Input type="file" accept="image/*" onChange={handleImageChange} />
+            {selectedImage && (
+              <p className="text-xs text-gray-500">
+                Selected: {selectedImage.name}
               </p>
-              <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
-            </div>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="technologies">Technologies</Label>
+            <Label>Technologies (comma separated)</Label>
             <Input
-              id="technologies"
               name="technologies"
               value={formData.technologies}
               onChange={handleInputChange}
-              placeholder="e.g., React, Node.js, MongoDB"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label>Description</Label>
             <Textarea
-              id="description"
               name="description"
+              rows={4}
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Enter track description"
-              rows={4}
-              required
             />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>

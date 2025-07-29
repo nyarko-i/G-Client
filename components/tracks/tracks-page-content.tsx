@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import DashboardLayout from "@/components/dashboard/dashboard-layout";
 import TracksGrid from "./tracks-grid";
 import AddTrackModal from "./add-track-modal";
+import { toast } from "sonner";
 
+// Final Track interface for internal use
 interface Track {
   id: string;
   title: string;
@@ -14,91 +16,89 @@ interface Track {
   price: number;
   duration: string;
   image: string;
-  students: number;
+  students?: number;
   instructor: string;
-  rating: number;
-  technologies: string[];
+  rating?: number;
+  technologies?: string[];
   status: "active" | "inactive" | "draft";
 }
 
-export default function TracksPageContent() {
-  const [tracks, setTracks] = useState<Track[]>([
-    {
-      id: "1",
-      title: "Software Engineering",
-      description: "Unlock your potential with comprehensive training",
-      price: 400,
-      duration: "12 weeks",
-      image: "/images/dashboard/tracks/software.jpg",
-      students: 12,
-      instructor: "John Doe",
-      rating: 4.5,
-      technologies: ["NodeJS", "ReactJS", "MongoDB"],
-      status: "active",
-    },
-    {
-      id: "2",
-      title: "Cloud Computing",
-      description: "Unlock your potential with comprehensive training",
-      price: 350,
-      duration: "10 weeks",
-      image: "/images/dashboard/tracks/cloud.jpg",
-      students: 8,
-      instructor: "Jane Smith",
-      rating: 4.3,
-      technologies: ["Azure", "AWS", "Docker"],
-      status: "active",
-    },
-    {
-      id: "3",
-      title: "Data Science",
-      description: "Unlock your potential with comprehensive training",
-      price: 400,
-      duration: "14 weeks",
-      image: "/images/dashboard/tracks/data.jpg",
-      students: 15,
-      instructor: "Mike Johnson",
-      rating: 4.7,
-      technologies: ["Python", "PowerBI", "TensorFlow"],
-      status: "active",
-    },
-    {
-      id: "4",
-      title: "UI/UX",
-      description: "Unlock your potential with comprehensive training",
-      price: 250,
-      duration: "8 weeks",
-      image: "/images/dashboard/tracks/UI.jpg",
-      students: 6,
-      instructor: "Sarah Wilson",
-      rating: 4.4,
-      technologies: ["Figma", "Sketch", "Adobe XD"],
-      status: "active",
-    },
-  ]);
+// Raw track data from the API before transforming
+interface ApiTrack {
+  _id?: string;
+  id?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  price?: number;
+  duration?: string;
+  image?: string;
+  instructor?: string;
+  students?: number;
+  rating?: number;
+  technologies?: string[];
+  status?: string;
+}
 
+export default function TracksPageContent() {
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const fetchTracks = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/tracks");
+      const result = await response.json();
+
+      let rawTracks: ApiTrack[] = [];
+
+      if (Array.isArray(result)) {
+        rawTracks = result;
+      } else if (result.success && Array.isArray(result.data)) {
+        rawTracks = result.data;
+      } else if (Array.isArray(result.tracks)) {
+        rawTracks = result.tracks;
+      } else {
+        console.error("Unexpected API response:", result);
+        toast.error("Failed to load tracks");
+        return;
+      }
+
+      const cleanedTracks: Track[] = rawTracks.map((track: ApiTrack) => ({
+        id: track.id || track._id || crypto.randomUUID(),
+        title: track.name || track.title || "Untitled",
+        description: track.description || "",
+        price: track.price ?? 0,
+        duration: track.duration || "",
+        image: track.image || "/placeholder.jpg",
+        instructor: track.instructor || "Unknown",
+        technologies: Array.isArray(track.technologies)
+          ? track.technologies
+          : [],
+        status: (track.status as "active" | "inactive" | "draft") || "draft",
+        students: track.students ?? 0,
+        rating: track.rating ?? 0,
+      }));
+
+      setTracks(cleanedTracks);
+    } catch (error) {
+      console.error("Error fetching tracks:", error);
+      toast.error("Network error while loading tracks");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTracks();
+  }, [fetchTracks]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
     return () => clearTimeout(timer);
   }, []);
-
-  const handleAddTrack = useCallback(
-    (newTrack: Omit<Track, "id" | "students" | "rating" | "status">) => {
-      const track: Track = {
-        ...newTrack,
-        id: (tracks.length + 1).toString(),
-        students: 0,
-        rating: 0,
-        status: "active",
-      };
-      setTracks((prev) => [...prev, track]);
-      setIsAddModalOpen(false);
-    },
-    [tracks]
-  );
 
   return (
     <DashboardLayout>
@@ -124,20 +124,26 @@ export default function TracksPageContent() {
           </Button>
         </div>
 
-        {/* Tracks Grid */}
+        {/* Track Grid */}
         <div
           className={`transition-all duration-700 ease-out delay-200 ${
             isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          <TracksGrid tracks={tracks} />
+          {isLoading ? (
+            <p className="text-gray-500 text-sm">Loading tracks...</p>
+          ) : tracks.length === 0 ? (
+            <p className="text-gray-500 text-sm">No tracks found.</p>
+          ) : (
+            <TracksGrid tracks={tracks} />
+          )}
         </div>
 
-        {/* Add Track Modal */}
+        {/* Modal */}
         <AddTrackModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
-          onSubmit={handleAddTrack}
+          onSubmit={fetchTracks}
         />
       </div>
     </DashboardLayout>

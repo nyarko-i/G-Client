@@ -1,42 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-// Types
-interface TrackFormData {
-  title: string;
-  price: string;
-  duration: string;
-  instructor: string;
-  description: string;
-  technologies: string;
-}
-
-interface Track {
-  title: string;
-  price: number;
-  duration: string;
-  instructor: string;
-  description: string;
-  technologies: string[];
-  image: string;
-}
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import Image from "next/image";
 
 interface AddTrackModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (track: Track) => void;
+  onSubmit: () => Promise<void>;
 }
 
 export default function AddTrackModal({
@@ -44,184 +25,185 @@ export default function AddTrackModal({
   onClose,
   onSubmit,
 }: AddTrackModalProps) {
-  const [formData, setFormData] = useState<TrackFormData>({
-    title: "",
-    price: "",
-    duration: "",
-    instructor: "",
-    description: "",
-    technologies: "",
-  });
-
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [price, setPrice] = useState("");
+  const [duration, setDuration] = useState("");
+  const [instructor, setInstructor] = useState("");
+  const [technologies, setTechnologies] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+    if (f) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      reader.onload = () => setPreview(reader.result as string);
+      reader.readAsDataURL(f);
+    } else {
+      setPreview(null);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newTrack: Track = {
-      ...formData,
-      price: Number(formData.price),
-      technologies: formData.technologies.split(",").map((tech) => tech.trim()),
-      image:
-        preview ||
-        "/placeholder.svg?height=200&width=300&text=" +
-          encodeURIComponent(formData.title),
-    };
+    if (!file) {
+      toast.error("Please select an image file");
+      return;
+    }
 
-    onSubmit(newTrack);
+    if (title.trim().length === 0) {
+      toast.error("Track title is required");
+      return;
+    }
 
-    // Reset form
-    setFormData({
-      title: "",
-      price: "",
-      duration: "",
-      instructor: "",
-      description: "",
-      technologies: "",
-    });
-    setPreview(null);
+    if (description.trim().length < 10) {
+      toast.error("Description must be at least 10 characters");
+      return;
+    }
+
+    setIsLoading(true);
+
+    const form = new FormData();
+    form.append("name", title);
+    form.append("description", description);
+    form.append("price", price);
+    form.append("duration", duration);
+    form.append("instructor", instructor);
+    form.append("technologies", technologies);
+    form.append("image", file);
+
+    try {
+      const res = await fetch("/api/tracks", {
+        method: "POST",
+        body: form,
+      });
+
+      const json = await res.json();
+
+      if (!json.success) {
+        toast.error(json.message || "Failed to add track");
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Track added!");
+      setTitle("");
+      setDescription("");
+      setFile(null);
+      setPreview(null);
+      setPrice("");
+      setDuration("");
+      setInstructor("");
+      setTechnologies("");
+      onClose();
+      await onSubmit();
+    } catch {
+      toast.error("Network error while adding track");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            Add New Track
-          </DialogTitle>
+          <DialogTitle>Add New Track</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Track name</Label>
+          <div>
+            <Label htmlFor="title">Title</Label>
             <Input
               id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Enter track name"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               required
             />
           </div>
 
-          {/* Price */}
-          <div className="space-y-2">
-            <Label htmlFor="price">Price</Label>
-            <Input
-              id="price"
-              name="price"
-              type="number"
-              value={formData.price}
-              onChange={handleInputChange}
-              placeholder="Enter price"
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               required
             />
           </div>
 
-          {/* Duration */}
-          <div className="space-y-2">
-            <Label htmlFor="duration">Duration</Label>
-            <Input
-              id="duration"
-              name="duration"
-              value={formData.duration}
-              onChange={handleInputChange}
-              placeholder="e.g., 12 weeks"
-              required
-            />
-          </div>
-
-          {/* Instructor */}
-          <div className="space-y-2">
-            <Label htmlFor="instructor">Instructor</Label>
-            <Input
-              id="instructor"
-              name="instructor"
-              value={formData.instructor}
-              onChange={handleInputChange}
-              placeholder="Enter instructor name"
-              required
-            />
-          </div>
-
-          {/* Image Upload */}
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="image">Track Image</Label>
             <Input
               id="image"
               type="file"
               accept="image/*"
-              onChange={handleImageChange}
+              onChange={handleFileChange}
+              required
             />
             {preview && (
-              <div className="relative w-full h-64 mt-2 border rounded-md overflow-hidden">
+              <div className="mt-2 w-full h-32 relative">
                 <Image
                   src={preview}
                   alt="Preview"
                   fill
-                  className="object-contain"
+                  className="object-contain rounded"
                 />
               </div>
             )}
           </div>
 
-          {/* Technologies */}
-          <div className="space-y-2">
-            <Label htmlFor="technologies">Technologies</Label>
+          <div>
+            <Label htmlFor="price">Price ($)</Label>
             <Input
-              id="technologies"
-              name="technologies"
-              value={formData.technologies}
-              onChange={handleInputChange}
-              placeholder="e.g., React, Node.js, MongoDB"
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Enter track description"
-              rows={4}
+              id="price"
+              type="number"
+              step="0.01"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
               required
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Create Track
-            </Button>
+          <div>
+            <Label htmlFor="duration">Duration</Label>
+            <Input
+              id="duration"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="e.g. 12 weeks"
+              required
+            />
           </div>
+
+          <div>
+            <Label htmlFor="instructor">Instructor</Label>
+            <Input
+              id="instructor"
+              value={instructor}
+              onChange={(e) => setInstructor(e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="technologies">Technologies (comma-separated)</Label>
+            <Input
+              id="technologies"
+              value={technologies}
+              onChange={(e) => setTechnologies(e.target.value)}
+              placeholder="e.g. React, Node.js"
+              required
+            />
+          </div>
+
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? "Submitting..." : "Add Track"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>
