@@ -17,6 +17,7 @@ import { logout } from "@/lib/api/auth";
 import { toast } from "sonner";
 import Image from "next/image";
 
+// Sidebar navigation items
 const navigationItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Invoices", href: "/dashboard/invoices", icon: FileText },
@@ -39,6 +40,7 @@ export default function DashboardSidebar({
   const router = useRouter();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
+  // Retrieve user email from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -51,6 +53,7 @@ export default function DashboardSidebar({
     }
   }, []);
 
+  // Logout handler
   const handleLogout = async () => {
     try {
       await logout();
@@ -61,6 +64,7 @@ export default function DashboardSidebar({
     }
   };
 
+  // Active link checker
   const isActive = (href: string) =>
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
@@ -73,36 +77,38 @@ export default function DashboardSidebar({
             isCollapsed ? "w-20" : "w-64"
           }`}
         >
-          {/* Logo */}
+          {/* Logo Section */}
           <div
             className={`flex shrink-0 items-center animate-fade-in ${
-              isCollapsed ? "h-16 justify-center" : "h-20 px-4"
+              isCollapsed ? "h-16 justify-center" : "h-24 px-0"
             }`}
           >
             {isCollapsed ? (
+              // Small square logo when collapsed
               <div className="w-10 h-10 bg-white rounded-sm flex items-center justify-center shadow-sm">
                 <Image
                   src="/images/register/logo.png"
                   alt="Logo"
-                  width={32}
-                  height={32}
+                  width={40}
+                  height={40}
                   style={{ height: "auto", width: "auto" }}
                 />
               </div>
             ) : (
-              <div className=" w-full bg-white rounded-sm p-4  shadow-md flex justify-center">
+              // Larger centered logo with matching nav width
+              <div className="w-full bg-white rounded-md p-3 shadow-md flex items-center justify-center mx-2">
                 <Image
                   src="/images/register/logo.png"
                   alt="Your Logo"
-                  width={62}
-                  height={62}
+                  width={64}
+                  height={64}
                   style={{ height: "auto", width: "auto" }}
                 />
               </div>
             )}
           </div>
 
-          {/* Navigation */}
+          {/* Navigation Items */}
           <nav className="flex flex-1 flex-col mt-4">
             <ul className="flex-1 space-y-2">
               {navigationItems.map((item) => (
@@ -124,7 +130,7 @@ export default function DashboardSidebar({
 
             {/* Footer Section */}
             <div className="mt-6 border-t border-blue-500 pt-4">
-              {/* Email and Avatar */}
+              {/* Email + Avatar */}
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-blue-800 flex items-center justify-center text-white text-xs font-bold">
                   {userEmail?.[0]?.toUpperCase() ?? "U"}
@@ -160,7 +166,7 @@ export default function DashboardSidebar({
               isOpen ? "translate-x-0" : "-translate-x-full"
             }`}
           >
-            {/* Close button */}
+            {/* Close Button */}
             <div className="flex justify-end mb-4">
               <Button
                 variant="ghost"
@@ -171,7 +177,8 @@ export default function DashboardSidebar({
                 x
               </Button>
             </div>
-            {/* Same nav items */}
+
+            {/* Mobile Nav Items */}
             <nav className="space-y-2">
               {navigationItems.map((item) => (
                 <Link
@@ -190,7 +197,7 @@ export default function DashboardSidebar({
               ))}
             </nav>
 
-            {/* Mobile footer */}
+            {/* Mobile Footer */}
             <div className="mt-6 border-t border-blue-500 pt-4">
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-blue-800 flex items-center justify-center text-white text-xs font-bold">
@@ -210,7 +217,8 @@ export default function DashboardSidebar({
               </Button>
             </div>
           </div>
-          {/* click-away overlay */}
+
+          {/* Click-away overlay */}
           <div className="flex-1" onClick={() => onToggle(false)} />
         </div>
       </div>

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
 
-// Props expected from parent component
+// Props from parent
 interface AddTrackModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -26,7 +26,7 @@ export default function AddTrackModal({
   onClose,
   onSubmit,
 }: AddTrackModalProps) {
-  // Form state variables
+  // Form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -37,7 +37,7 @@ export default function AddTrackModal({
   const [isLoading, setIsLoading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
-  // Handles image selection and preview display
+  // Image preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     setFile(f);
@@ -50,11 +50,10 @@ export default function AddTrackModal({
     }
   };
 
-  // Handles form submission logic
+  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (!file) return toast.error("Please select an image file");
     if (title.trim().length === 0)
       return toast.error("Track title is required");
@@ -63,7 +62,6 @@ export default function AddTrackModal({
 
     setIsLoading(true);
 
-    // Prepare form data for API
     const form = new FormData();
     form.append("name", title);
     form.append("description", description);
@@ -87,7 +85,6 @@ export default function AddTrackModal({
         return;
       }
 
-      // Reset form and refresh parent data
       toast.success("Track added!");
       setTitle("");
       setDescription("");
@@ -122,6 +119,7 @@ export default function AddTrackModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
           </div>
 
@@ -132,6 +130,7 @@ export default function AddTrackModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
           </div>
 
@@ -143,8 +142,8 @@ export default function AddTrackModal({
               accept="image/*"
               onChange={handleFileChange}
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
-            {/* Display image preview if available */}
             {preview && (
               <div className="mt-2 w-full h-32 relative">
                 <Image
@@ -166,6 +165,7 @@ export default function AddTrackModal({
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
           </div>
 
@@ -177,6 +177,7 @@ export default function AddTrackModal({
               onChange={(e) => setDuration(e.target.value)}
               placeholder="e.g. 12 weeks"
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
           </div>
 
@@ -187,6 +188,7 @@ export default function AddTrackModal({
               value={instructor}
               onChange={(e) => setInstructor(e.target.value)}
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
           </div>
 
@@ -198,10 +200,10 @@ export default function AddTrackModal({
               onChange={(e) => setTechnologies(e.target.value)}
               placeholder="e.g. React, Node.js"
               required
+              className="bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
             />
           </div>
 
-          {/* Submit button */}
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? "Submitting..." : "Add Track"}
           </Button>

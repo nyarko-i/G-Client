@@ -112,7 +112,7 @@ export default function TrackDetailsContent({
       {/* Back navigation */}
       <button
         onClick={() => router.back()}
-        className="text-2xl hover:text-gray-700"
+        className="text-2xl hover:text-gray-700 cursor-pointer"
       >
         ←
       </button>
