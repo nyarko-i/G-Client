@@ -1,159 +1,144 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import React, { ChangeEvent, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Course } from "@/lib/types/course";
+
+// Define the update payload format
+export type UpdatedCoursePayload = Omit<Course, "status"> & {
+  status: "active" | "inactive" | "draft";
+  pictureFile?: File;
+};
 
 export interface EditCourseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (course: Course) => void;
   course: Course;
-  availableTracks: string[];
+  onSubmit: (updated: UpdatedCoursePayload) => void;
 }
 
 export default function EditCourseModal({
   isOpen,
   onClose,
-  onSubmit,
   course,
-  availableTracks,
+  onSubmit,
 }: EditCourseModalProps) {
-  const [formData, setFormData] = useState<
-    Omit<Course, "id" | "picture" | "dateCreated" | "status">
-  >({
-    title: "",
-    author: "",
-    track: "",
-    description: "",
-  });
+  const [title, setTitle] = useState(course.title);
+  const [track, setTrack] = useState(course.track);
+  const [description, setDescription] = useState(course.description);
+  const [status, setStatus] = useState<"active" | "inactive" | "draft">(
+    course.status || "draft"
+  );
+  const [pictureFile, setPictureFile] = useState<File>();
+  const [loading, setLoading] = useState(false);
 
+  // Sync modal fields with selected course
   useEffect(() => {
-    if (course) {
-      setFormData({
-        title: course.title,
-        author: course.author,
-        track: course.track,
-        description: course.description,
-      });
-    }
+    setTitle(course.title);
+    setTrack(course.track);
+    setDescription(course.description);
+    setStatus(course.status || "draft");
+    setPictureFile(undefined);
   }, [course]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  // Handle update submission
+  const handleSave = () => {
+    if (!title || !track || !description) {
+      toast.error("Please fill in all fields");
+      return;
+    }
 
-  const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, track: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const updated: Course = {
+    const updated: UpdatedCoursePayload = {
       ...course,
-      ...formData,
+      title,
+      track,
+      description,
+      status,
+      ...(pictureFile && { pictureFile }),
     };
-    onSubmit(updated);
+
+    setLoading(true);
+    try {
+      onSubmit(updated);
+      toast.success("Course updated");
+      onClose();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md space-y-4">
         <DialogHeader>
-          <DialogTitle>Update Course</DialogTitle>
+          <DialogTitle>Edit Course</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Same form fields as AddCourseModal */}
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          {/* Author */}
-          <div className="space-y-2">
-            <Label htmlFor="author">Author</Label>
-            <Input
-              id="author"
-              name="author"
-              value={formData.author}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-          {/* Track */}
-          <div className="space-y-2">
-            <Label htmlFor="track">Track</Label>
-            <Select
-              value={formData.track}
-              onValueChange={handleSelectChange}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a track" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTracks.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              required
-            />
-          </div>
-          {/* Picture (static) */}
-          <div className="space-y-2">
-            <Label>Picture</Label>
-            <div className="border-2 border-dashed rounded-lg p-6 text-center">
-              <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-              <p className="text-sm text-gray-600">
-                Choose file — no file chosen
-              </p>
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Update Course</Button>
-          </div>
-        </form>
+
+        <div>
+          <Label>Title</Label>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+        </div>
+
+        <div>
+          <Label>Track</Label>
+          <Input value={track} onChange={(e) => setTrack(e.target.value)} />
+        </div>
+
+        <div>
+          <Label>Description</Label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <Label>Status</Label>
+          <select
+            className="w-full border px-2 py-1 rounded"
+            value={status}
+            onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+              setStatus(e.target.value as "active" | "inactive" | "draft")
+            }
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+
+        <div>
+          <Label>New Picture</Label>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setPictureFile(e.target.files?.[0])
+            }
+          />
+        </div>
+
+        <div className="flex justify-end space-x-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

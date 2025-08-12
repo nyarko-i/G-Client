@@ -1,211 +1,200 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { getTracks, createCourse } from "@/lib/api/auth"; // adjust if your API fn is uploadCourse
+import { Track } from "@/lib/types/track";
 import { Course } from "@/lib/types/course";
-import Image from "next/image";
 
-// Props for the modal component
-export interface AddCourseModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface AddCourseModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSubmit: (course: Course) => void;
-  availableTracks: string[];
 }
 
 export default function AddCourseModal({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   onSubmit,
-  availableTracks,
 }: AddCourseModalProps) {
-  // Form state (without id/picture/status/dateCreated)
-  const [formData, setFormData] = useState<
-    Omit<Course, "id" | "picture" | "dateCreated" | "status">
-  >({
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [formData, setFormData] = useState<{
+    title: string;
+    track: string;
+    description: string;
+    pictureFile: File | null;
+  }>({
     title: "",
-    author: "",
     track: "",
     description: "",
+    pictureFile: null,
   });
 
-  // Image preview state
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Fetch tracks when modal opens
+  useEffect(() => {
+    if (!open) return;
 
-  // File input reference (to trigger programmatically)
-  const fileInputRef = useRef<HTMLInputElement>(null);
+    const fetchTracks = async () => {
+      try {
+        const res = await getTracks();
+        // defensive: make sure res.data is an array
+        const tracksData = Array.isArray(res.data) ? res.data : [];
+        setTracks(tracksData);
+      } catch (err) {
+        console.error("getTracks error:", err);
+        toast.error("Failed to load tracks");
+        setTracks([]);
+      }
+    };
 
-  // Handle text input changes
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    fetchTracks();
+  }, [open]);
+
+  // Generic change handler (inputs + select + textarea)
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle dropdown track selection
-  const handleSelectChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, track: value }));
+  // TypeScript-safe file handler (no 'possibly null' error)
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // explicit local variable and guards satisfy TS
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      return;
+    }
+
+    // FileList.item(0) returns File | null according to DOM typing; guard again
+    const file = files.item(0);
+    if (!file) return;
+
+    setFormData((prev) => ({ ...prev, pictureFile: file }));
   };
 
-  // Handle file selection and preview
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string); // Set base64 preview
-      };
-      reader.readAsDataURL(file);
+  const handleSubmit = async () => {
+    const { title, track, description, pictureFile } = formData;
+
+    if (!title || !track || !description || !pictureFile) {
+      toast.error("Please fill all fields and select a picture.");
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append("title", title);
+    payload.append("track", track);
+    payload.append("description", description);
+    payload.append("picture", pictureFile);
+
+    try {
+      const res = await createCourse(payload); // rename to uploadCourse if that's what your API exports
+      if (res?.data) {
+        onSubmit(res.data as Course);
+        toast.success("Course added successfully");
+        onOpenChange(false);
+        setFormData({
+          title: "",
+          track: "",
+          description: "",
+          pictureFile: null,
+        });
+      }
+    } catch (err) {
+      console.error("createCourse error:", err);
+      toast.error("Failed to add course");
     }
   };
 
-  // Trigger hidden file input when user clicks the area
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // Submit the course
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const newCourse: Course = {
-      ...formData,
-      picture:
-        imagePreview ||
-        `/placeholder.svg?height=100&width=100&text=${encodeURIComponent(
-          formData.title
-        )}`,
-    };
-
-    onSubmit(newCourse);
-
-    // Reset form
-    setFormData({ title: "", author: "", track: "", description: "" });
-    setImagePreview(null);
-    onClose();
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Add New Course</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Course Title */}
-          <div className="space-y-2">
+
+        <div className="space-y-4">
+          <div>
             <Label htmlFor="title">Title</Label>
             <Input
               id="title"
               name="title"
               value={formData.title}
-              onChange={handleInputChange}
-              required
+              onChange={handleChange}
+              placeholder="Course title"
             />
           </div>
 
-          {/* Author Name */}
-          <div className="space-y-2">
-            <Label htmlFor="author">Author</Label>
-            <Input
-              id="author"
-              name="author"
-              value={formData.author}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          {/* Track Selection */}
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="track">Track</Label>
-            <Select value={formData.track} onValueChange={handleSelectChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a track" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableTracks.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              id="track"
+              name="track"
+              value={formData.track}
+              onChange={handleChange}
+              className="w-full border rounded p-2"
+            >
+              <option value="">Select a track</option>
+              {tracks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {/* use `name` because your API returns `name` on track */}
+                  {/* If your track shape differs, adjust here */}
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Course Description */}
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea
+            <textarea
               id="description"
               name="description"
               value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              required
+              onChange={handleChange}
+              className="w-full border rounded p-2"
+              rows={4}
+              placeholder="Course description"
             />
           </div>
 
-          {/* Image Upload Section */}
-          <div className="space-y-2">
-            <Label>Picture</Label>
-            <div
-              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50"
-              onClick={handleImageClick}
-            >
-              {/* Show preview if available, else placeholder */}
-              {imagePreview ? (
-                <Image
-                  src={imagePreview}
-                  alt="Preview"
-                  width={100}
-                  height={100}
-                  className="mx-auto rounded object-cover"
-                />
-              ) : (
-                <>
-                  <Upload className="mx-auto mb-2 h-8 w-8 text-gray-400" />
-                  <p className="text-sm text-gray-600">
-                    Click to upload an image
-                  </p>
-                </>
-              )}
-              {/* Hidden file input */}
-              <input
-                type="file"
-                accept="image/*"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleImageChange}
-              />
-            </div>
+          <div>
+            <Label htmlFor="picture">Picture</Label>
+            <Input
+              id="picture"
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+            />
           </div>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose} type="button">
-              Cancel
-            </Button>
-            <Button type="submit">Create Course</Button>
-          </div>
-        </form>
+          {formData.pictureFile && (
+            <div className="mt-2 w-40 h-24 relative rounded overflow-hidden border">
+              <Image
+                src={URL.createObjectURL(formData.pictureFile)}
+                alt="Selected picture preview"
+                fill
+                style={{ objectFit: "cover" }}
+              />
+            </div>
+          )}
+
+          <Button onClick={handleSubmit} className="w-full">
+            Add Course
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

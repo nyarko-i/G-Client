@@ -1,236 +1,113 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Search } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import DashboardLayout from "@/components/dashboard/dashboard-layout";
-import CoursesTable from "./courses-table";
 import AddCourseModal from "./add-course-modal";
 import EditCourseModal from "./edit-course-modal";
+import CoursesTable from "./courses-table";
 import { Course } from "@/lib/types/course";
-
-/** Sample courses data */
-const coursesData: Course[] = [
-  {
-    id: "1",
-    title: "ReactJS",
-    author: "Deborah Owusu",
-    track: "Software Development",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn React fundamentals and advanced concepts",
-    picture: "/images/courses/react.jpg",
-    status: "active",
-  },
-  {
-    id: "2",
-    title: "Nutanix",
-    author: "Gladys Amoah",
-    track: "Cloud Computing",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn Nutanix fundamentals and concepts",
-    picture: "/images/courses/nutanix.jpg",
-    status: "active",
-  },
-  {
-    id: "3",
-    title: "Next js",
-    author: "James Addo",
-    track: "Software Development",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn Next js fundamentals and advanced concepts",
-    picture: "/images/courses/next.jpg",
-    status: "active",
-  },
-  {
-    id: "4",
-    title: "Python",
-    author: "Isaac Nyarko",
-    track: "Software Development",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn Python fundamentals and advanced concepts",
-    picture: "/images/courses/python.jpg",
-    status: "active",
-  },
-  {
-    id: "5",
-    title: "Figma",
-    author: "Princess Afryie",
-    track: "UI/UX",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn Figma fundamentals and advanced concepts",
-    picture: "/images/courses/figma.jpg",
-    status: "active",
-  },
-  {
-    id: "6",
-    title: "Docker",
-    author: "Emmanuel Crentsil",
-    track: "Cloud Computing",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn Docker fundamentals and advanced concepts",
-    picture: "/images/courses/docker.jpg",
-    status: "active",
-  },
-  {
-    id: "7",
-    title: "MongoDB",
-    author: "Prince Awuah",
-    track: "Software Development",
-    dateCreated: "Jan 5, 2025",
-    description: "Learn Database fundamentals and advanced concepts",
-    picture: "/images/courses/mongo.jpg",
-    status: "active",
-  },
-];
-
-/** Available tracks for course creation */
-const availableTracks = [
-  "Software Development",
-  "Cloud Computing",
-  "Data Science",
-  "UI/UX Design",
-  "Mobile Development",
-] as const;
+import { getCourses, updateCourse, deleteCourse } from "@/lib/api/auth";
+import { toast } from "sonner";
+import DashboardLayout from "@/components/dashboard/dashboard-layout";
 
 export default function CoursesPageContent() {
-  const [courses, setCourses] = useState<Course[]>(coursesData);
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>(coursesData);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [editCourse, setEditCourse] = useState<Course | null>(null);
 
-  // Page entrance animation
+  // Load courses on mount
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 100);
-    return () => clearTimeout(timer);
+    const fetchCourses = async () => {
+      try {
+        const response = await getCourses();
+        setCourses(response.data || []);
+      } catch {
+        toast.error("Failed to load courses");
+      }
+    };
+
+    fetchCourses();
   }, []);
 
-  // Filter whenever searchTerm or courses change
-  useEffect(() => {
-    setFilteredCourses(
-      courses.filter(
-        (c) =>
-          c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.track.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [searchTerm, courses]);
+  // Add course to state
+  const handleAddCourse = (newCourse: Course) => {
+    if (!newCourse) return;
+    setCourses((prev) => [newCourse, ...prev]);
+  };
 
-  /** Add a new course */
-  const handleAddCourse = (
-    newCourse: Omit<Course, "id" | "dateCreated" | "status">
+  // Update course
+  const handleUpdateCourse = async (
+    updatedData: Partial<Course> & { pictureFile?: File }
   ) => {
-    const created: Course = {
-      ...newCourse,
-      id: String(courses.length + 1),
-      dateCreated: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      status: "active",
-    };
-    setCourses((prev) => [...prev, created]);
-    setIsAddModalOpen(false);
+    if (!editCourse) return;
+
+    const formData = new FormData();
+    formData.append("title", updatedData.title || "");
+    formData.append("track", updatedData.track || "");
+    formData.append("description", updatedData.description || "");
+    formData.append("author", updatedData.author || "");
+    formData.append("status", updatedData.status || "draft");
+    if (updatedData.pictureFile) {
+      formData.append("picture", updatedData.pictureFile);
+    }
+
+    try {
+      const res = await updateCourse(editCourse.id!, formData);
+      if (res.data) {
+        setCourses((prev) =>
+          prev.map((c) => (c.id === editCourse.id ? res.data! : c))
+        );
+        toast.success("Course updated");
+      }
+      setEditCourse(null);
+    } catch {
+      toast.error("Failed to update course");
+    }
   };
 
-  /** Open edit modal */
-  const handleEditCourse = (course: Course) => {
-    setEditingCourse(course);
-    setIsEditModalOpen(true);
-  };
-
-  /** Update an existing course */
-  const handleUpdateCourse = (updatedCourse: Course) => {
-    setCourses((prev) =>
-      prev.map((c) => (c.id === updatedCourse.id ? updatedCourse : c))
-    );
-    setEditingCourse(null);
-    setIsEditModalOpen(false);
-  };
-
-  /** Delete a course */
-  const handleDeleteCourse = (courseId: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== courseId));
+  // Delete course
+  const handleDeleteCourse = async (id: string) => {
+    try {
+      await deleteCourse(id);
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Course deleted");
+    } catch {
+      toast.error("Failed to delete course");
+    }
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="p-6">
         {/* Page Header */}
-        <div
-          className={`flex items-center justify-between transition-all duration-700 ease-out ${
-            isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Manage Courses</h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Filter, sort, and access detailed courses
-            </p>
-          </div>
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add course
-          </Button>
-        </div>
-
-        {/* Search Bar */}
-        <div
-          className={`transition-all duration-700 ease-out delay-100 ${
-            isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search course"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold">Courses</h2>
+          <Button onClick={() => setIsAddOpen(true)}>Add Course</Button>
         </div>
 
         {/* Courses Table */}
-        <div
-          className={`transition-all duration-700 ease-out delay-200 ${
-            isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-        >
-          <CoursesTable
-            courses={filteredCourses}
-            onEdit={handleEditCourse}
-            onDelete={handleDeleteCourse}
-          />
-        </div>
+        <CoursesTable
+          courses={courses}
+          onEdit={(course) => setEditCourse(course)}
+          onDelete={handleDeleteCourse}
+        />
 
         {/* Add Course Modal */}
         <AddCourseModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
+          open={isAddOpen}
+          onOpenChange={setIsAddOpen}
           onSubmit={handleAddCourse}
-          availableTracks={availableTracks as unknown as string[]}
         />
 
         {/* Edit Course Modal */}
-        <EditCourseModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingCourse(null);
-          }}
-          onSubmit={handleUpdateCourse}
-          course={editingCourse!}
-          availableTracks={availableTracks as unknown as string[]}
-        />
+        {editCourse && (
+          <EditCourseModal
+            isOpen={!!editCourse}
+            onClose={() => setEditCourse(null)}
+            course={editCourse}
+            onSubmit={handleUpdateCourse}
+          />
+        )}
       </div>
     </DashboardLayout>
   );
