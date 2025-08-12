@@ -30,9 +30,10 @@ export default function InvoicesPageContent() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [loading, setLoading] = useState(true); // Start as loading
+  const [loading, setLoading] = useState(true); // Start loading immediately
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // Fetch invoices
   useEffect(() => {
     fetchInvoices()
       .then((list) => {
@@ -49,6 +50,7 @@ export default function InvoicesPageContent() {
       });
   }, []);
 
+  // Search filter
   useEffect(() => {
     const filtered = invoices.filter((invoice) => {
       const term = searchTerm.toLowerCase();
@@ -93,116 +95,92 @@ export default function InvoicesPageContent() {
     }
   };
 
+  // Skeleton table component
+  const TableSkeleton = () => (
+    <div className="w-full border rounded-md">
+      <div className="grid grid-cols-5 border-b bg-gray-50 p-3">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-4 w-24" />
+        ))}
+      </div>
+      {[...Array(6)].map((_, rowIndex) => (
+        <div
+          key={rowIndex}
+          className="grid grid-cols-5 border-b p-3 items-center"
+        >
+          {[...Array(5)].map((_, colIndex) => (
+            <Skeleton key={colIndex} className="h-4 w-20" />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Static Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Manage Invoices
+            </h1>
+            <p className="text-sm text-gray-600 mt-1">
+              Filter, sort, and access detailed invoices
+            </p>
+          </div>
+          <Button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105"
+            disabled={loading}
+          >
+            <Plus className="h-4 w-4 mr-2" /> Add Invoice
+          </Button>
+        </div>
+
+        {/* Search Bar (always visible) */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search invoice"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+            disabled={loading}
+          />
+        </div>
+
+        {/* Table Section */}
         {loading && !isLoaded ? (
-          <>
-            {/* Skeleton for header */}
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-60" />
-              </div>
-              <Skeleton className="h-10 w-32" />
-            </div>
-
-            {/* Skeleton for search */}
-            <Skeleton className="h-10 w-full max-w-md" />
-
-            {/* Skeleton table rows */}
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex space-x-4">
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ))}
-            </div>
-          </>
+          <TableSkeleton />
         ) : (
-          <>
-            {/* Header */}
-            <div
-              className={`flex items-center justify-between transition-all duration-700 ease-out ${
-                isLoaded
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
-              }`}
-            >
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Manage Invoices
-                </h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  Filter, sort, and access detailed invoices
-                </p>
-              </div>
-              <Button
-                onClick={() => setIsAddModalOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 transition-all duration-300 hover:scale-105"
-                disabled={loading}
-              >
-                <Plus className="h-4 w-4 mr-2" /> Add Invoice
-              </Button>
-            </div>
+          <InvoicesTable
+            invoices={filteredInvoices}
+            onEdit={handleOpenEdit}
+            onDelete={handleDelete}
+            loading={loading}
+          />
+        )}
 
-            {/* Search */}
-            <div
-              className={`transition-all duration-700 ease-out delay-100 ${
-                isLoaded
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
-              }`}
-            >
-              <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search invoice"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                  disabled={loading}
-                />
-              </div>
-            </div>
+        {/* Modals */}
+        <AddInvoiceModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onCreated={handleCreate}
+          availableLearners={availableLearners}
+        />
 
-            {/* Table */}
-            <div
-              className={`transition-all duration-700 ease-out delay-200 ${
-                isLoaded
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-4"
-              }`}
-            >
-              <InvoicesTable
-                invoices={filteredInvoices}
-                onEdit={handleOpenEdit}
-                onDelete={handleDelete}
-                loading={loading}
-              />
-            </div>
-
-            {/* Modals */}
-            <AddInvoiceModal
-              isOpen={isAddModalOpen}
-              onClose={() => setIsAddModalOpen(false)}
-              onCreated={handleCreate}
-              availableLearners={availableLearners}
-            />
-
-            {editingInvoice && (
-              <EditInvoiceModal
-                isOpen={isEditModalOpen}
-                onClose={() => {
-                  setIsEditModalOpen(false);
-                  setEditingInvoice(null);
-                }}
-                onUpdated={handleUpdated}
-                invoice={editingInvoice}
-                availableLearners={availableLearners}
-              />
-            )}
-          </>
+        {editingInvoice && (
+          <EditInvoiceModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+              setIsEditModalOpen(false);
+              setEditingInvoice(null);
+            }}
+            onUpdated={handleUpdated}
+            invoice={editingInvoice}
+            availableLearners={availableLearners}
+          />
         )}
       </div>
     </DashboardLayout>
