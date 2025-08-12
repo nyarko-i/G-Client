@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* components/invoices/invoices-page-content.tsx */
+
 "use client";
 
 import { useEffect, useState } from "react";

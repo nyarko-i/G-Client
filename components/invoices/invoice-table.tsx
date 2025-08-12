@@ -17,9 +17,6 @@ interface InvoicesTableProps {
   loading?: boolean;
 }
 
-/**
- * Safe helpers that avoid `any` — they operate on unknown and narrow types.
- */
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === "object" && v !== null;
 
@@ -47,7 +44,7 @@ const getInvoiceId = (invoice: unknown): string => {
 };
 
 const getLearnerName = (invoice: unknown): string => {
-  // check learnerName field first (UI-normalized), else check nested learner object
+  // check learnerName field first, else check nested learner object
   const byName = getStringField(invoice, "learnerName");
   if (byName) return byName;
 
