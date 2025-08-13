@@ -6,13 +6,12 @@ import type { Track } from "@/lib/types/track";
 
 // Axios instance
 const api = axios.create({
-  baseURL: "/api", // this will get rewritten via next.config.js proxy
+  baseURL: "/api", 
 });
 
-// lib/api/auth.ts
 
 export const logout = async () => {
-  // example: clear cookies/session by calling your backend logout endpoint
+
   return axios.post("/api/logout");
 };
 

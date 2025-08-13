@@ -4,9 +4,7 @@
 import axios from "axios";
 import type { Invoice, InvoiceStatus } from "@/lib/types/invoice";
 
-/**
- * Axios instance — uses your Next.js rewrites (/api -> remote)
- */
+
 const api = axios.create({
   baseURL: "/api",
   headers: {
