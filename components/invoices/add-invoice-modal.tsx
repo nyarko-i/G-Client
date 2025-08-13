@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* components/invoices/add-invoice-modal.tsx */
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -18,21 +17,26 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { createInvoice, CreateInvoicePayload } from "@/lib/api/invoices";
 import { toast } from "sonner";
 
-import type { Invoice } from "@/lib/types/invoice";
-import { createInvoice, type CreateInvoicePayload } from "@/lib/api/invoices";
+interface LearnerOption {
+  id: string;
+  name: string;
+  email: string;
+}
 
 interface AddInvoiceModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  onCreated: (invoice: Invoice) => void;
-  availableLearners: { id: string; name: string; email: string }[];
+  onCreated: (invoice: any) => void;
+  availableLearners: LearnerOption[];
 }
 
 export default function AddInvoiceModal({
-  isOpen,
+  open,
   onClose,
   onCreated,
   availableLearners,
@@ -41,19 +45,23 @@ export default function AddInvoiceModal({
     learnerId: "",
     amount: "",
     dueDate: "",
+    status: "pending" as "pending" | "paid" | "overdue",
     paymentDetails: "",
   });
+
   const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleSelectLearner = (value: string) => {
+    setFormData((prev) => ({ ...prev, learnerId: value }));
+  };
+
+  const handleSelectStatus = (value: "pending" | "paid" | "overdue") => {
+    setFormData((prev) => ({ ...prev, status: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,10 +72,9 @@ export default function AddInvoiceModal({
       return;
     }
 
-    // If paymentDetails is present, require at least 10 characters
-    const paymentDetailsTrim = formData.paymentDetails?.trim() ?? "";
-    if (paymentDetailsTrim && paymentDetailsTrim.length < 10) {
-      toast.error("Payment details must be at least 10 characters.");
+    const amountNum = Number(formData.amount);
+    if (!formData.amount || isNaN(amountNum) || amountNum <= 0) {
+      toast.error("Please enter a valid amount.");
       return;
     }
 
@@ -75,130 +82,108 @@ export default function AddInvoiceModal({
     try {
       const payload: CreateInvoicePayload = {
         learner: formData.learnerId,
+        amount: amountNum,
+        status: formData.status,
         paystackCallbackUrl: "http://localhost:3000/payment",
       };
 
-      const amountNum = Number(formData.amount);
-      if (formData.amount && !isNaN(amountNum) && amountNum > 0) {
-        payload.amount = amountNum;
-      }
-
       if (formData.dueDate) payload.dueDate = formData.dueDate;
-      if (paymentDetailsTrim) payload.paymentDetails = paymentDetailsTrim;
-
-      console.log("Creating invoice payload:", payload);
+      if (formData.paymentDetails.trim())
+        payload.paymentDetails = formData.paymentDetails.trim();
 
       const createdInvoice = await createInvoice(payload);
-      console.log("createInvoice returned:", createdInvoice);
 
       toast.success("Invoice created successfully");
+
       onCreated(createdInvoice);
 
       setFormData({
         learnerId: "",
         amount: "",
         dueDate: "",
+        status: "pending",
         paymentDetails: "",
       });
 
       onClose();
     } catch (err: any) {
       console.error("Create invoice failed:", err);
-      const msg = err?.message ?? "Failed to create invoice";
-      toast.error(msg);
+      toast.error(err?.message ?? "Failed to create invoice");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">
-            Add New Invoice
-          </DialogTitle>
+          <DialogTitle>Add New Invoice</DialogTitle>
         </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Learner select */}
-          <div className="space-y-2">
-            <Label htmlFor="learner">Select learner</Label>
-            <Select
-              value={formData.learnerId}
-              onValueChange={(value) => handleSelectChange("learnerId", value)}
-            >
-              <SelectTrigger id="learner">
-                <SelectValue placeholder="Select a learner" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableLearners.map((learner) => (
-                  <SelectItem key={learner.id} value={learner.id}>
-                    {learner.name} ({learner.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Learner */}
+          <Select
+            value={formData.learnerId}
+            onValueChange={handleSelectLearner}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Learner" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableLearners.map((learner) => (
+                <SelectItem key={learner.id} value={learner.id}>
+                  {learner.name} ({learner.email})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Amount (optional)</Label>
-            <Input
-              id="amount"
-              name="amount"
-              type="number"
-              value={formData.amount}
-              onChange={handleInputChange}
-              placeholder="Enter amount"
-              min={0}
-              step="any"
-            />
-          </div>
+          <Input
+            name="amount"
+            type="number"
+            placeholder="Amount"
+            value={formData.amount}
+            onChange={handleChange}
+          />
 
-          {/* Due date */}
-          <div className="space-y-2">
-            <Label htmlFor="dueDate">Due date (optional)</Label>
-            <Input
-              id="dueDate"
-              name="dueDate"
-              type="date"
-              value={formData.dueDate}
-              onChange={handleInputChange}
-            />
-          </div>
+          {/* Due Date */}
+          <Input
+            name="dueDate"
+            type="date"
+            value={formData.dueDate}
+            onChange={handleChange}
+          />
 
-          {/* Payment details */}
-          <div className="space-y-2">
-            <Label htmlFor="paymentDetails">Payment details (optional)</Label>
-            <Textarea
-              id="paymentDetails"
-              name="paymentDetails"
-              value={formData.paymentDetails}
-              onChange={handleInputChange}
-              placeholder="Add any payment notes or details"
-              rows={3}
-            />
-          </div>
+          {/* Status */}
+          <Select value={formData.status} onValueChange={handleSelectStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="paid">Paid</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+            </SelectContent>
+          </Select>
 
-          {/* Buttons */}
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
+          {/* Payment Details */}
+          <Input
+            name="paymentDetails"
+            placeholder="Payment Details"
+            value={formData.paymentDetails}
+            onChange={handleChange}
+          />
+
+          <DialogFooter>
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 transition-all duration-300"
               disabled={loading}
             >
               {loading ? "Creating..." : "Create Invoice"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

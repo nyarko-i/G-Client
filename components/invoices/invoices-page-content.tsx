@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,25 +11,28 @@ import AddInvoiceModal from "./add-invoice-modal";
 import EditInvoiceModal from "./edit-invoice-modal";
 import type { Invoice } from "@/lib/types/invoice";
 import { fetchInvoices, deleteInvoice } from "@/lib/api/invoices";
+import { getLearners } from "@/lib/api/learners";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const availableLearners = [
-  {
-    id: "67f792c7338e633d391bfe0a",
-    name: "Passum Tornado",
-    email: "guevel@hearkn.com",
-  },
-];
-
 export default function InvoicesPageContent() {
+  // Invoices state
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [filteredInvoices, setFilteredInvoices] = useState<Invoice[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Learners state
+  const [availableLearners, setAvailableLearners] = useState<
+    { id: string; name: string; email: string }[]
+  >([]);
+
+  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null);
-  const [loading, setLoading] = useState(true); // Start loading immediately
+
+  // Loading state
+  const [loading, setLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Fetch invoices
@@ -50,6 +52,25 @@ export default function InvoicesPageContent() {
       });
   }, []);
 
+  // Fetch learners
+  useEffect(() => {
+    getLearners()
+      .then((data) => {
+        const mapped = data.map((learner: any) => ({
+          id: learner.id || learner._id,
+          name: `${learner.firstName ?? learner.first_name ?? ""} ${
+            learner.lastName ?? learner.last_name ?? ""
+          }`.trim(),
+          email: learner.email,
+        }));
+        setAvailableLearners(mapped);
+      })
+      .catch((err: any) => {
+        console.error("fetch learners failed", err?.response?.data ?? err);
+        toast.error("Failed to load learners");
+      });
+  }, []);
+
   // Search filter
   useEffect(() => {
     const filtered = invoices.filter((invoice) => {
@@ -64,6 +85,7 @@ export default function InvoicesPageContent() {
     setFilteredInvoices(filtered);
   }, [searchTerm, invoices]);
 
+  // Handlers
   const handleCreate = (createdInvoice: Invoice) => {
     setInvoices((prev) => [...prev, createdInvoice]);
     toast.success("Invoice added");
@@ -95,7 +117,7 @@ export default function InvoicesPageContent() {
     }
   };
 
-  // Skeleton table component
+  // Skeleton table while loading
   const TableSkeleton = () => (
     <div className="w-full border rounded-md">
       <div className="grid grid-cols-5 border-b bg-gray-50 p-3">
@@ -119,7 +141,7 @@ export default function InvoicesPageContent() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Static Header */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
@@ -138,7 +160,7 @@ export default function InvoicesPageContent() {
           </Button>
         </div>
 
-        {/* Search Bar (always visible) */}
+        {/* Search */}
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -150,7 +172,7 @@ export default function InvoicesPageContent() {
           />
         </div>
 
-        {/* Table Section */}
+        {/* Table */}
         {loading && !isLoaded ? (
           <TableSkeleton />
         ) : (
@@ -162,14 +184,15 @@ export default function InvoicesPageContent() {
           />
         )}
 
-        {/* Modals */}
+        {/* Add Invoice Modal */}
         <AddInvoiceModal
-          isOpen={isAddModalOpen}
+          open={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onCreated={handleCreate}
-          availableLearners={availableLearners}
+          availableLearners={availableLearners} // only learners
         />
 
+        {/* Edit Invoice Modal */}
         {editingInvoice && (
           <EditInvoiceModal
             isOpen={isEditModalOpen}
@@ -179,7 +202,7 @@ export default function InvoicesPageContent() {
             }}
             onUpdated={handleUpdated}
             invoice={editingInvoice}
-            availableLearners={availableLearners}
+            availableLearners={availableLearners} // only learners
           />
         )}
       </div>

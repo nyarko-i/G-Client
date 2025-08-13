@@ -21,6 +21,7 @@ interface EditInvoiceModalProps {
   invoice: Invoice;
   onClose: () => void;
   onUpdated: (updatedInvoice: Invoice) => void;
+  // remove availableTracks entirely
   availableLearners?: { id: string; name: string; email: string }[];
 }
 
@@ -32,17 +33,16 @@ export default function EditInvoiceModal({
 }: EditInvoiceModalProps) {
   const [formData, setFormData] = useState<UpdateInvoicePayload>({
     amount: invoice.amount,
-    dueDate: invoice.dueDate,
+    dueDate: invoice.dueDate?.split("T")[0],
     status: invoice.status,
     paymentDetails: invoice.paymentDetails,
   });
   const [loading, setLoading] = useState(false);
 
-  // keep form in sync when invoice prop changes
   useEffect(() => {
     setFormData({
       amount: invoice.amount,
-      dueDate: invoice.dueDate,
+      dueDate: invoice.dueDate?.split("T")[0],
       status: invoice.status,
       paymentDetails: invoice.paymentDetails,
     });
@@ -55,9 +55,7 @@ export default function EditInvoiceModal({
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      console.log("Updating invoice:", invoice.id, "payload:", formData);
       const updated = await updateInvoice(invoice.id, formData);
-      console.log("updateInvoice returned:", updated);
       toast.success("Invoice updated");
       onUpdated(updated);
       onClose();
@@ -97,11 +95,23 @@ export default function EditInvoiceModal({
             value={formData.dueDate ?? ""}
             onChange={(e) => handleChange("dueDate", e.target.value)}
           />
-          <Input
-            placeholder="Status"
-            value={formData.status ?? ""}
-            onChange={(e) => handleChange("status", e.target.value as any)}
-          />
+
+          {/* Status select */}
+          <select
+            className="w-full border rounded-md px-3 py-2"
+            value={formData.status ?? "pending"}
+            onChange={(e) =>
+              handleChange(
+                "status",
+                e.target.value as "pending" | "paid" | "overdue"
+              )
+            }
+          >
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="overdue">Overdue</option>
+          </select>
+
           <Input
             placeholder="Payment Details"
             value={formData.paymentDetails ?? ""}

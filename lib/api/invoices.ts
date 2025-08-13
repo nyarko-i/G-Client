@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* lib/api/invoices.ts */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import type { Invoice, InvoiceStatus } from "@/lib/types/invoice";
@@ -20,6 +19,7 @@ export type CreateInvoicePayload = {
   dueDate?: string;
   paymentDetails?: string;
   track?: string;
+  status?: "pending" | "paid" | "overdue"; 
 };
 
 export type UpdateInvoicePayload = {

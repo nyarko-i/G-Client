@@ -4,9 +4,8 @@
 import axios from "axios";
 import { Learner, LearnerStatus } from "@/lib/types/learner";
 
-
 /**
- * Axios instance — uses Next.js rewrites (/api -> remote)
+ * Axios instance — uses Next.js rewrites (/api -> remote backend)
  */
 const api = axios.create({
   baseURL: "/api",
@@ -105,6 +104,7 @@ export function normalizeLearner(raw: any): Learner {
  */
 export async function getLearners(): Promise<Learner[]> {
   try {
+    // Using axios instance to fetch learners from /api/learners (Next.js rewrite → backend)
     const res = await api.get("/learners");
     const data: any = res?.data ?? {};
 
@@ -148,7 +148,6 @@ export async function updateLearner(id: string, payload: UpdateLearnerPayload): 
     throw new Error(extractErrorMessage(err));
   }
 }
-
 
 /**
  * Delete learner by ID
