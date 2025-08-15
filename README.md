@@ -16,12 +16,10 @@ A full-featured and modern **Learning Management System** (LMS) built with **Nex
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
 - **Frontend**: Next.js, TypeScript, Tailwind CSS
 - **Backend**: Custom API (Azure-hosted)
 - **UI Components**: shadcn/ui, Lucide Icons, Sonner (for toast notifications)
 - **Auth**: Custom API with JWT & OTP flow
 - **State**: Local state hooks
-
----
