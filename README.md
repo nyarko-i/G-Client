@@ -6,13 +6,13 @@ A full-featured and modern **Learning Management System** (LMS) built with **Nex
 
 ## 🚀 Features
 
-- ✅ Modern Authentication (Signup, Login, OTP Verification, Reset Password)
-- 📚 Course Management with Images, Descriptions, Prices
-- 🧩 Track Management (Organize content by topic or module)
-- 📷 Image Upload and Preview in Admin Dashboard
-- 💬 Toast Notifications with Sonner
-- 🎨 Responsive and Animated UI
-- 📁 Clean and Modular Codebase
+- ✅ Modern Authentication (Signup, Login, OTP Verification, Reset Password).
+- 📚 Course Management with Images, Descriptions, Prices.
+- 🧩 Track Management (Organize content by topic or module).
+- 📷 Image Upload and Preview in Admin Dashboard.
+- 💬 Toast Notifications with Sonner.
+- 🎨 Responsive and Animated UI.
+- 📁 Clean and Modular Codebase.
 
 ---
 
